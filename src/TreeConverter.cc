@@ -44,8 +44,38 @@ std::tuple<std::string, std::vector<Type>, Type> OperatorInfo(ExpressionType typ
                 abort();
             }
             return {"==", std::vector<Type>(n_arity, Type::kInt), Type::kBool};
+        case ExpressionType::ONE:
+            if (n_arity != 2) {
+                std::cerr << "error: n_arity must be 2 for ne" << std::endl;
+                abort();
+            }
+            return {"!=", std::vector<Type>(n_arity, Type::kInt), Type::kBool};
+        case ExpressionType::OLE:
+            if (n_arity != 2) {
+                std::cerr << "error: n_arity must be 2 for le" << std::endl;
+                abort();
+            }
+            return {"<=", std::vector<Type>(n_arity, Type::kInt), Type::kBool};
+        case ExpressionType::OLT:
+            if (n_arity != 2) {
+                std::cerr << "error: n_arity must be 2 for lt" << std::endl;
+                abort();
+            }
+            return {"<", std::vector<Type>(n_arity, Type::kInt), Type::kBool};
+        case ExpressionType::OGE:
+            if (n_arity != 2) {
+                std::cerr << "error: n_arity must be 2 for ge" << std::endl;
+                abort();
+            }
+            return {">=", std::vector<Type>(n_arity, Type::kInt), Type::kBool};
+        case ExpressionType::OGT:
+            if (n_arity != 2) {
+                std::cerr << "error: n_arity must be 2 for gt" << std::endl;
+                abort();
+            }
+            return {">", std::vector<Type>(n_arity, Type::kInt), Type::kBool};
         default:
-            std::cerr << "error: unknown operator type: " << type << std::endl;
+            std::cerr << "error: unknown operator type: " << type << " (" << XCSP3Core::operatorToString(type) << ")" << std::endl;
             abort();
     }
 }

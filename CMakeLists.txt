@@ -20,7 +20,9 @@ add_library(XCSP3_CPP_Parser_lib STATIC IMPORTED)
 add_dependencies(XCSP3_CPP_Parser_lib XCSP3_CPP_Parser_project)
 set_property(TARGET XCSP3_CPP_Parser_lib PROPERTY IMPORTED_LOCATION ${XCSP3_CPP_Parser_BINARY_DIR}/libxcsp3parser.a)
 
-add_executable(xcsp3_converter src/main.cc src/TreeConverter.cc)
-target_include_directories(xcsp3_converter PUBLIC ${PROJECT_SOURCE_DIR}/include ${XCSP3_CPP_Parser_SOURCE_DIR}/include)
-target_link_libraries(xcsp3_converter XCSP3_CPP_Parser_lib)
+find_package(LibXml2 REQUIRED)
+
+add_executable(xcsp3_converter src/main.cc src/TreeConverter.cc src/Converter.cc)
+target_include_directories(xcsp3_converter PUBLIC ${PROJECT_SOURCE_DIR}/include ${XCSP3_CPP_Parser_SOURCE_DIR}/include ${LIBXML2_INCLUDE_DIR})
+target_link_libraries(xcsp3_converter XCSP3_CPP_Parser_lib ${LIBXML2_LIBRARIES})
 add_dependencies(xcsp3_converter XCSP3_CPP_Parser_project)

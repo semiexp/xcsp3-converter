@@ -106,6 +106,43 @@ void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Cor
     converted_.push_back(desc);
 }
 
+void ConverterCallbacks::buildConstraintExtension(std::string id, std::vector<XCSP3Core::XVariable *> list, std::vector<std::vector<int>> &tuples, bool support, bool hasStar) {
+    last_tuples_ = tuples;
+    buildConstraintExtensionAs(id, list, support, hasStar);
+}
+
+void ConverterCallbacks::buildConstraintExtensionAs(std::string id, std::vector<XCSP3Core::XVariable *> list, bool support, bool hasStar) {
+    for (auto& tuple : last_tuples_) {
+        bool flg = false;
+        for (int i = 0; i < tuple.size(); ++i) {
+            if (tuple[i] != STAR) {
+                flg = true;
+                break;
+            }
+        }
+        if (!flg) {
+            // tuple (*,*, ...)
+            if (!support) {
+                converted_.push_back("false");
+            }
+            return;
+        }
+    }
+    std::ostringstream oss;
+    oss << "(" << (support ? "||" : "&&");
+    for (auto& tuple : last_tuples_) {
+        oss << " (" << (support ? "&&" : "||");
+        for (int i = 0; i < tuple.size(); ++i) {
+            if (tuple[i] != STAR) {
+                oss << " (" << (support ? "==" : "!=") << " " << VarDescription(list[i], Type::kInt) << " " << tuple[i] << ")";
+            }
+        }
+        oss << ")";
+    }
+    oss << ")";
+    converted_.push_back(oss.str());
+}
+
 std::string ConverterCallbacks::VarDescription(const std::string& name, Type type) const {
     if (auto found = variables_.find(name); found != variables_.end()) {
         return std::get<0>(AsType(found->second, type));

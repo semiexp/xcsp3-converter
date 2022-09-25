@@ -7,7 +7,7 @@
 void ConverterCallbacks::buildVariableInteger(std::string id, int minValue, int maxValue) {
     if (0 <= minValue && maxValue <= 1) {
         // boolean variable
-        std::string var_name = "b" + std::to_string(variables_.size());
+        std::string var_name = id;
         variables_.insert({id, {var_name, Type::kBool}});
         converted_.push_back("(bool " + var_name + ")");
         if (minValue == 1) {
@@ -18,7 +18,7 @@ void ConverterCallbacks::buildVariableInteger(std::string id, int minValue, int 
         }
     } else {
         // int variable
-        std::string var_name = "i" + std::to_string(variables_.size());
+        std::string var_name = id;
         variables_.insert({id, {var_name, Type::kInt}});
         converted_.push_back("(int " + var_name + " " + std::to_string(minValue) + " " + std::to_string(maxValue) + ")");
     }

@@ -1,5 +1,6 @@
 #include "Converter.h"
 
+#include <algorithm>
 #include <sstream>
 
 #include <XCSP3CoreParser.h>
@@ -29,8 +30,28 @@ void ConverterCallbacks::buildVariableInteger(std::string id, std::vector<int>& 
         buildVariableInteger(id, 0, 1);
         return;
     }
-    std::cerr << "not implemented yet" << std::endl;
-    abort();
+    if (values.size() == 0) {
+        std::cerr << "empty domain: value " << id << std::endl;
+        abort();
+    }
+    int lb = values[0], ub = values[0];
+    for (int i = 0; i < values.size(); ++i) {
+        lb = std::min(lb, values[i]);
+        ub = std::max(ub, values[i]);
+    }
+    variables_.insert({id, {id, Type::kInt}});
+    converted_.push_back("(int " + id + " " + std::to_string(lb) + " " + std::to_string(ub) + ")");
+
+    std::string domain_desc = "(||";
+    for (int i = 0; i < values.size(); ++i) {
+        domain_desc += " (== ";
+        domain_desc += id;
+        domain_desc.push_back(' ');
+        domain_desc += std::to_string(values[i]);
+        domain_desc.push_back(')');
+    }
+    domain_desc.push_back(')');
+    converted_.push_back(domain_desc);
 }
 
 void ConverterCallbacks::buildConstraintIntension(std::string id, XCSP3Core::Tree* tree) {
@@ -53,7 +74,7 @@ void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Cor
 }
 
 void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::vector<int> &coeffs, XCSP3Core::XCondition &cond) {
-    if (cond.operandType != XCSP3Core::OperandType::INTEGER) {
+    if (!(cond.operandType == XCSP3Core::OperandType::INTEGER || cond.operandType == XCSP3Core::OperandType::VARIABLE)) {
         std::cerr << "buildConstraintSum supported only for integer operand" << std::endl;
         abort();
     }
@@ -101,7 +122,11 @@ void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Cor
         }
     }
     desc += ") ";
-    desc += std::to_string(cond.val);
+    if (cond.operandType == XCSP3Core::OperandType::INTEGER) {
+        desc += std::to_string(cond.val);
+    } else {
+        desc += VarDescription(cond.var, Type::kInt);
+    }
     desc.push_back(')');
     converted_.push_back(desc);
 }
@@ -109,6 +134,12 @@ void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Cor
 void ConverterCallbacks::buildConstraintExtension(std::string id, std::vector<XCSP3Core::XVariable *> list, std::vector<std::vector<int>> &tuples, bool support, bool hasStar) {
     last_tuples_ = tuples;
     buildConstraintExtensionAs(id, list, support, hasStar);
+}
+
+void ConverterCallbacks::buildConstraintExtension(string id, XCSP3Core::XVariable *variable, std::vector<int> &tuples, bool support, bool hasStar) {
+    last_tuples_.clear();
+    for (int v : tuples) last_tuples_.push_back({v});
+    buildConstraintExtensionAs(id, {variable}, support, hasStar);
 }
 
 void ConverterCallbacks::buildConstraintExtensionAs(std::string id, std::vector<XCSP3Core::XVariable *> list, bool support, bool hasStar) {

@@ -20,6 +20,8 @@ std::tuple<std::string, std::vector<Type>, Type> OperatorInfo(ExpressionType typ
             return {"-", {Type::kInt}, Type::kInt};
         case ExpressionType::OADD:
             return {"+", std::vector<Type>(n_arity, Type::kInt), Type::kInt};
+        case ExpressionType::OMUL:
+            return {"*", std::vector<Type>(n_arity, Type::kInt), Type::kInt};
         case ExpressionType::OSUB:
             if (n_arity != 2) {
                 std::cerr << "error: n_arity must be 2 for sub" << std::endl;

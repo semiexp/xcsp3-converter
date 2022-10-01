@@ -34,12 +34,24 @@ std::tuple<std::string, std::vector<Type>, Type> OperatorInfo(ExpressionType typ
                 abort();
             }
             return {"if", {Type::kBool, Type::kInt, Type::kInt}, Type::kInt};
+        case ExpressionType::OABS:
+            if (n_arity != 1) {
+                std::cerr << "error: n_arity must be 1 for abs" << std::endl;
+                abort();
+            }
+            return {"abs", {Type::kInt}, Type::kInt};
         case ExpressionType::OAND:
             return {"and", std::vector<Type>(n_arity, Type::kBool), Type::kBool};
         case ExpressionType::OOR:
             return {"or", std::vector<Type>(n_arity, Type::kBool), Type::kBool};
         case ExpressionType::OXOR:
             return {"xor", std::vector<Type>(n_arity, Type::kBool), Type::kBool};
+        case ExpressionType::OIMP:
+            if (n_arity != 2) {
+                std::cerr << "error: n_arity must be 2 for imp" << std::endl;
+                abort();
+            }
+            return {"=>", std::vector<Type>(n_arity, Type::kBool), Type::kBool};
         case ExpressionType::OEQ:
             if (n_arity < 2) {
                 std::cerr << "error: n_arity must be at least 2 for eq" << std::endl;
@@ -98,6 +110,19 @@ TypedConvertedExpr ConvertTreeImpl(const XCSP3Core::Node* node, const VariableMa
         }
     }
     if (auto n = dynamic_cast<const XCSP3Core::NodeOperator*>(node)) {
+        if (n->type == ExpressionType::ODIST) {
+            int n_arity = n->parameters.size();
+            if (n_arity != 2) {
+                std::cerr << "error: n_arity must be 2 for dist" << std::endl;
+                abort();
+            }
+            std::string ret_expr = "(abs (- ";
+            ret_expr += std::get<0>(AsInt(ConvertTreeImpl(n->parameters[0], var_map)));
+            ret_expr.push_back(' ');
+            ret_expr += std::get<0>(AsInt(ConvertTreeImpl(n->parameters[1], var_map)));
+            ret_expr += "))";
+            return {ret_expr, Type::kInt};
+        }
         int n_arity = n->parameters.size();
         auto [op_name, input_types, output_type] = OperatorInfo(n->type, n_arity);
 

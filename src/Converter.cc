@@ -34,24 +34,16 @@ void ConverterCallbacks::buildVariableInteger(std::string id, std::vector<int>& 
         std::cerr << "empty domain: value " << id << std::endl;
         abort();
     }
-    int lb = values[0], ub = values[0];
-    for (int i = 0; i < values.size(); ++i) {
-        lb = std::min(lb, values[i]);
-        ub = std::max(ub, values[i]);
-    }
     variables_.insert({id, {id, Type::kInt}});
-    converted_.push_back("(int " + id + " " + std::to_string(lb) + " " + std::to_string(ub) + ")");
-
-    std::string domain_desc = "(||";
+    std::string desc = "(int " + id + " (";
     for (int i = 0; i < values.size(); ++i) {
-        domain_desc += " (== ";
-        domain_desc += id;
-        domain_desc.push_back(' ');
-        domain_desc += std::to_string(values[i]);
-        domain_desc.push_back(')');
+        if (i != 0) {
+            desc.push_back(' ');
+        }
+        desc += std::to_string(values[i]);
     }
-    domain_desc.push_back(')');
-    converted_.push_back(domain_desc);
+    desc += "))";
+    converted_.push_back(desc);
 }
 
 void ConverterCallbacks::buildConstraintIntension(std::string id, XCSP3Core::Tree* tree) {

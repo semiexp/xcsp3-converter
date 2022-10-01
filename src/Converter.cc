@@ -60,6 +60,16 @@ void ConverterCallbacks::buildConstraintAlldifferent(std::string id, std::vector
     converted_.push_back(stmt);
 }
 
+void ConverterCallbacks::buildConstraintAlldifferent(string id, std::vector<XCSP3Core::Tree*> &list) {
+    std::string stmt = "(alldifferent";
+    for (auto& t : list) {
+        stmt.push_back(' ');
+        stmt += std::get<0>(AsInt(ConvertTree(t, variables_)));
+    }
+    stmt.push_back(')');
+    converted_.push_back(stmt);
+}
+
 void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Core::XVariable *> &list, XCSP3Core::XCondition &cond) {
     std::vector<int> coeffs(list.size(), 1);
     buildConstraintSum(id, list, coeffs, cond);

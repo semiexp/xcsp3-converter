@@ -70,6 +70,27 @@ void ConverterCallbacks::buildConstraintAlldifferent(string id, std::vector<XCSP
     converted_.push_back(stmt);
 }
 
+void ConverterCallbacks::buildConstraintAlldifferentMatrix(std::string id, std::vector<std::vector<XCSP3Core::XVariable *>> &matrix) {
+    int n_row = matrix.size();
+    if (n_row == 0) return;
+    int n_col = matrix[0].size();
+    for (int i = 1; i < n_row; ++i) {
+        if (matrix[i].size() != n_col) {
+            std::cerr << "jagged matrix not supported for Alldifferent" << std::endl;
+            abort();
+        }
+    }
+    for (int y = 0; y < n_row; ++y) {
+        std::vector<XCSP3Core::XVariable*> row = matrix[y];
+        buildConstraintAlldifferent(id, row);
+    }
+    for (int x = 0; x < n_col; ++x) {
+        std::vector<XCSP3Core::XVariable*> col;
+        for (int y = 0; y < n_row; ++y) col.push_back(matrix[y][x]);
+        buildConstraintAlldifferent(id, col);
+    }
+}
+
 void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Core::XVariable *> &list, XCSP3Core::XCondition &cond) {
     std::vector<int> coeffs(list.size(), 1);
     buildConstraintSum(id, list, coeffs, cond);
@@ -206,6 +227,53 @@ void ConverterCallbacks::buildConstraintInstantiation(std::string id, std::vecto
             abort();
         }
     }
+}
+
+void ConverterCallbacks::buildConstraintElement(std::string id, std::vector<XCSP3Core::XVariable *> &list, int startIndex, XCSP3Core::XVariable *index, XCSP3Core::RankType rank, XCSP3Core::XVariable* value) {
+    buildConstraintElement(id, list, startIndex, index, rank, VarDescription(value, Type::kInt));
+}
+
+void ConverterCallbacks::buildConstraintElement(std::string id, std::vector<XCSP3Core::XVariable *> &list, int startIndex, XCSP3Core::XVariable *index, XCSP3Core::RankType rank, int value) {
+    buildConstraintElement(id, list, startIndex, index, rank, std::to_string(value));
+}
+
+void ConverterCallbacks::buildConstraintElement(std::string id, std::vector<XCSP3Core::XVariable *> &list, int startIndex, XCSP3Core::XVariable *index, XCSP3Core::RankType rank, const std::string& value_desc) {
+    if (rank != XCSP3Core::RankType::ANY) {
+        std::cerr << "error: RankType other than ANY is not supported" << std::endl;
+        abort();
+    }
+    std::ostringstream oss;
+    oss << "(||";
+    for (int i = 0; i < list.size(); ++i) {
+        oss << " (&& (== " << VarDescription(list[i], Type::kInt) << " " << value_desc
+            << ") (== " << VarDescription(index, Type::kInt) << " " << std::to_string(i + startIndex)
+            << "))";
+    }
+    oss << ")";
+    converted_.push_back(oss.str());
+}
+
+void ConverterCallbacks::buildConstraintElement(std::string id, std::vector<std::vector<XCSP3Core::XVariable*> > &matrix, int startRowIndex, XCSP3Core::XVariable *rowIndex, int startColIndex, XCSP3Core::XVariable* colIndex, XCSP3Core::XVariable* value) {
+    buildConstraintElement(id, matrix, startRowIndex, rowIndex, startColIndex, colIndex, VarDescription(value, Type::kInt));
+}
+
+void ConverterCallbacks::buildConstraintElement(std::string id, std::vector<std::vector<XCSP3Core::XVariable*> > &matrix, int startRowIndex, XCSP3Core::XVariable *rowIndex, int startColIndex, XCSP3Core::XVariable* colIndex, int value) {
+    buildConstraintElement(id, matrix, startRowIndex, rowIndex, startColIndex, colIndex, std::to_string(value));
+}
+
+void ConverterCallbacks::buildConstraintElement(std::string id, std::vector<std::vector<XCSP3Core::XVariable*> > &matrix, int startRowIndex, XCSP3Core::XVariable *rowIndex, int startColIndex, XCSP3Core::XVariable* colIndex, const std::string& value_desc) {
+    std::ostringstream oss;
+    oss << "(||";
+    for (int y = 0; y < matrix.size(); ++y) {
+        for (int x = 0; x < matrix[y].size(); ++x) {
+            oss << " (&& (== " << VarDescription(matrix[y][x], Type::kInt) << " " << value_desc
+                << ") (== " << VarDescription(rowIndex, Type::kInt) << " " << std::to_string(y + startRowIndex)
+                << ") (== " << VarDescription(colIndex, Type::kInt) << " " << std::to_string(x + startColIndex)
+                << "))";
+        }
+    }
+    oss << ")";
+    converted_.push_back(oss.str());
 }
 
 std::string ConverterCallbacks::VarDescription(const std::string& name, Type type) const {

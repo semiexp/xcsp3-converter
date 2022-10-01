@@ -14,12 +14,19 @@ public:
     virtual void buildConstraintIntension(std::string id, XCSP3Core::Tree* tree) override;
     virtual void buildConstraintAlldifferent(std::string id, std::vector<XCSP3Core::XVariable*> &list) override;
     virtual void buildConstraintAlldifferent(std::string id, std::vector<XCSP3Core::Tree*> &list) override;
+    virtual void buildConstraintAlldifferentMatrix(std::string id, std::vector<std::vector<XCSP3Core::XVariable *>> &matrix) override;
     virtual void buildConstraintSum(std::string id, std::vector<XCSP3Core::XVariable *> &list, XCSP3Core::XCondition &cond) override;
     virtual void buildConstraintSum(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::vector<int> &coeffs, XCSP3Core::XCondition &cond) override;
     virtual void buildConstraintExtension(std::string id, std::vector<XCSP3Core::XVariable *> list, std::vector<std::vector<int>> &tuples, bool support, bool hasStar) override;
     virtual void buildConstraintExtension(string id, XCSP3Core::XVariable *variable, std::vector<int> &tuples, bool support, bool hasStar) override;
     virtual void buildConstraintExtensionAs(std::string id, std::vector<XCSP3Core::XVariable *> list, bool support, bool hasStar) override;
     virtual void buildConstraintInstantiation(std::string id, std::vector<XCSP3Core::XVariable *> &list, vector<int> &values) override;
+    virtual void buildConstraintElement(std::string id, std::vector<XCSP3Core::XVariable *> &list, int startIndex, XCSP3Core::XVariable *index, XCSP3Core::RankType rank, XCSP3Core::XVariable* value) override;
+    virtual void buildConstraintElement(std::string id, std::vector<XCSP3Core::XVariable *> &list, int startIndex, XCSP3Core::XVariable *index, XCSP3Core::RankType rank, int value) override;
+    void buildConstraintElement(std::string id, std::vector<XCSP3Core::XVariable *> &list, int startIndex, XCSP3Core::XVariable *index, XCSP3Core::RankType rank, const std::string& value_desc);
+    virtual void buildConstraintElement(std::string id, std::vector<std::vector<XCSP3Core::XVariable*> > &matrix, int startRowIndex, XCSP3Core::XVariable *rowIndex, int startColIndex, XCSP3Core::XVariable* colIndex, XCSP3Core::XVariable* value) override;
+    virtual void buildConstraintElement(std::string id, std::vector<std::vector<XCSP3Core::XVariable*> > &matrix, int startRowIndex, XCSP3Core::XVariable *rowIndex, int startColIndex, XCSP3Core::XVariable* colIndex, int value) override;
+    void buildConstraintElement(std::string id, std::vector<std::vector<XCSP3Core::XVariable*> > &matrix, int startRowIndex, XCSP3Core::XVariable *rowIndex, int startColIndex, XCSP3Core::XVariable* colIndex, const std::string& value_desc);
 
     const std::vector<std::string>& GetConvertedDescriptions() const { return converted_; }
 

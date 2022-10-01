@@ -50,6 +50,30 @@ void ConverterCallbacks::buildConstraintIntension(std::string id, XCSP3Core::Tre
     converted_.push_back(std::get<0>(AsBool(ConvertTree(tree, variables_))));
 }
 
+void ConverterCallbacks::buildConstraintOrdered(std::string id, std::vector<XCSP3Core::XVariable *> &list, XCSP3Core::OrderType order) {
+    std::string op;
+    switch (order) {
+        case XCSP3Core::OrderType::LT:
+            op = "<";
+            break;
+        case XCSP3Core::OrderType::LE:
+            op = "<=";
+            break;
+        case XCSP3Core::OrderType::GT:
+            op = ">";
+            break;
+        case XCSP3Core::OrderType::GE:
+            op = ">=";
+            break;
+        default:
+            std::cerr << "error: unsupported order type for Ordered: " << order << std::endl;
+            abort();
+    }
+    for (int i = 1; i < list.size(); ++i) {
+        converted_.push_back("(" + op + " " + VarDescription(list[i - 1], Type::kInt) + " " + VarDescription(list[i], Type::kInt) + ")");
+    }
+}
+
 void ConverterCallbacks::buildConstraintAlldifferent(std::string id, std::vector<XCSP3Core::XVariable*> &list) {
     std::string stmt = "(alldifferent";
     for (auto& var : list) {
@@ -276,6 +300,64 @@ void ConverterCallbacks::buildConstraintElement(std::string id, std::vector<std:
     converted_.push_back(oss.str());
 }
 
+void ConverterCallbacks::buildConstraintCardinality(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::vector<int> values, std::vector<int> &occurs, bool closed) {
+    std::vector<std::string> values_desc;
+    for (int i = 0; i < values.size(); ++i) values_desc.push_back(std::to_string(values[i]));
+    std::vector<std::string> occurs_desc;
+    for (int i = 0; i < occurs.size(); ++i) occurs_desc.push_back(std::to_string(occurs[i]));
+    buildConstraintCardinality(id, list, values_desc, occurs_desc, closed);
+}
+
+void ConverterCallbacks::buildConstraintCardinality(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::vector<int> values, std::vector<XCSP3Core::XVariable *> &occurs, bool closed) {
+    std::vector<std::string> values_desc;
+    for (int i = 0; i < values.size(); ++i) values_desc.push_back(std::to_string(values[i]));
+    std::vector<std::string> occurs_desc;
+    for (int i = 0; i < occurs.size(); ++i) occurs_desc.push_back(VarDescription(occurs[i], Type::kInt));
+    buildConstraintCardinality(id, list, values_desc, occurs_desc, closed);
+}
+
+void ConverterCallbacks::buildConstraintCardinality(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::vector<int> values, std::vector<XCSP3Core::XInterval> &occurs, bool closed) {
+    std::vector<std::string> values_desc;
+    for (int i = 0; i < values.size(); ++i) values_desc.push_back(std::to_string(values[i]));
+    std::vector<std::string> occurs_desc;
+    for (int i = 0; i < occurs.size(); ++i) {
+        int lo = occurs[i].min;
+        int hi = occurs[i].max;
+        std::string var_name = NewAuxVarName();
+        converted_.push_back("(int " + var_name + " " + std::to_string(lo) + " " + std::to_string(hi) + ")");
+        occurs_desc.push_back(var_name);
+    }
+    buildConstraintCardinality(id, list, values_desc, occurs_desc, closed);
+}
+
+void ConverterCallbacks::buildConstraintCardinality(std::string id, std::vector<XCSP3Core::XVariable *> &list, const std::vector<std::string>& values_desc, const std::vector<std::string> &occurs_desc, bool closed) {
+    if (closed) {
+        std::cerr << "error: cardinality of closed form not supported" << std::endl;
+        abort();
+    }
+
+    for (int i = 0; i < values_desc.size(); ++i) {
+        std::ostringstream oss;
+        oss << "(== (+";
+        for (int j = 0; j < list.size(); ++j) {
+            oss << " " << "(if (== " << VarDescription(list[j], Type::kInt) << " " << values_desc[i] << ") 1 0)";
+        }
+        oss << ") " << occurs_desc[i] << ")";
+        converted_.push_back(oss.str());
+    }
+}
+
+void ConverterCallbacks::buildConstraintExactlyK(std::string id, std::vector<XCSP3Core::XVariable *> &list, int value, int k) {
+    std::ostringstream oss;
+    oss << "(== (+";
+
+    for (int i = 0; i < list.size(); ++i) {
+        oss << " " << "(if (== " << VarDescription(list[i], Type::kInt) << " " << value << ") 1 0)";
+    }
+    oss << ") " << k << ")";
+    converted_.push_back(oss.str());
+}
+
 std::string ConverterCallbacks::VarDescription(const std::string& name, Type type) const {
     if (auto found = variables_.find(name); found != variables_.end()) {
         return std::get<0>(AsType(found->second, type));
@@ -287,6 +369,12 @@ std::string ConverterCallbacks::VarDescription(const std::string& name, Type typ
 
 std::string ConverterCallbacks::VarDescription(const XCSP3Core::XVariable* var, Type type) const {
     return VarDescription(var->id, type);
+}
+
+std::string ConverterCallbacks::NewAuxVarName() {
+    std::string ret("converter_aux_var_");
+    ret += std::to_string(n_aux_var_++);
+    return ret;
 }
 
 std::string ConvertXCSP3Instance(const char* filename) {

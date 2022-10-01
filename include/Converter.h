@@ -33,6 +33,7 @@ public:
     virtual void buildConstraintCardinality(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::vector<int> values, std::vector<XCSP3Core::XInterval> &occurs, bool closed) override;
     void buildConstraintCardinality(std::string id, std::vector<XCSP3Core::XVariable *> &list, const std::vector<std::string>& values_desc, const std::vector<std::string> &occurs_desc, bool closed);
     virtual void buildConstraintExactlyK(std::string id, std::vector<XCSP3Core::XVariable *> &list, int value, int k) override;
+    virtual void buildConstraintRegular(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::string start, std::vector<std::string> &final, std::vector<XCSP3Core::XTransition> &transitions) override;
 
     const std::vector<std::string>& GetConvertedDescriptions() const { return converted_; }
 

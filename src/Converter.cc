@@ -1,6 +1,7 @@
 #include "Converter.h"
 
 #include <algorithm>
+#include <map>
 #include <sstream>
 
 #include <XCSP3CoreParser.h>
@@ -356,6 +357,57 @@ void ConverterCallbacks::buildConstraintExactlyK(std::string id, std::vector<XCS
     }
     oss << ") " << k << ")";
     converted_.push_back(oss.str());
+}
+
+void ConverterCallbacks::buildConstraintRegular(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::string start, std::vector<std::string> &final, std::vector<XCSP3Core::XTransition> &transitions) {
+    std::map<std::string, int> state_id_map;
+    auto state_id = [&](const std::string& name) {
+        if (auto found = state_id_map.find(name); found != state_id_map.end()) {
+            return found->second;
+        } else {
+            int ret = state_id_map.size();
+            return state_id_map[name] = ret;
+        }
+    };
+
+    int start_id = state_id(start);
+    std::vector<int> final_id;
+    for (auto& s : final) final_id.push_back(state_id(s));
+    std::vector<std::tuple<int, int, int>> trans;  // (src, dest, value)
+    for (auto& t : transitions) {
+        int s_id = state_id(t.from);
+        int d_id = state_id(t.to);
+        trans.push_back({s_id, d_id, t.val});
+    }
+
+    std::vector<std::string> states;
+    states.push_back(std::to_string(start_id));
+    for (int i = 0; i < list.size(); ++i) {
+        std::string aux_var = NewAuxVarName();
+        if (i + 1 == list.size()) {
+            std::ostringstream oss;
+            oss << "(int " << aux_var << " (";
+            for (int j = 0; j < final_id.size(); ++j) {
+                if (j > 0) oss << " ";
+                oss << final_id[j];
+            }
+            oss << "))";
+            converted_.push_back(oss.str());
+        } else {
+            converted_.push_back("(int " + aux_var + " 0 " + std::to_string(state_id_map.size() - 1) + ")");
+        }
+        states.push_back(aux_var);
+    }
+
+    for (int i = 0; i < list.size(); ++i) {
+        std::ostringstream oss;
+        oss << "(||";
+        for (auto& [src, dest, value] : trans) {
+            oss << " (&& (== " << states[i] << " " << src << ") (== " << states[i + 1] << " " << dest << ") (== " << VarDescription(list[i], Type::kInt) << " " << value << "))";
+        }
+        oss << ")";
+        converted_.push_back(oss.str());
+    }
 }
 
 std::string ConverterCallbacks::VarDescription(const std::string& name, Type type) const {

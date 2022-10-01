@@ -46,6 +46,8 @@ std::tuple<std::string, std::vector<Type>, Type> OperatorInfo(ExpressionType typ
             return {"or", std::vector<Type>(n_arity, Type::kBool), Type::kBool};
         case ExpressionType::OXOR:
             return {"xor", std::vector<Type>(n_arity, Type::kBool), Type::kBool};
+        case ExpressionType::OIFF:
+            return {"iff", std::vector<Type>(n_arity, Type::kBool), Type::kBool};
         case ExpressionType::OIMP:
             if (n_arity != 2) {
                 std::cerr << "error: n_arity must be 2 for imp" << std::endl;

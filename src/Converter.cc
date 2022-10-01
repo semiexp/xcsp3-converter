@@ -176,6 +176,38 @@ void ConverterCallbacks::buildConstraintExtensionAs(std::string id, std::vector<
     converted_.push_back(oss.str());
 }
 
+void ConverterCallbacks::buildConstraintInstantiation(std::string id, std::vector<XCSP3Core::XVariable *> &list, vector<int> &values) {
+    if (list.size() != values.size()) {
+        if (values.size() == 1) {
+            // TODO: is this inference valid?
+            values = std::vector<int>(list.size(), values[0]);
+        } else {
+            std::cerr << "size mismatch" << std::endl;
+            abort();
+        }
+    }
+    for (int i = 0; i < list.size(); ++i) {
+        int value = values[i];
+        if (auto found = variables_.find(list[i]->id); found != variables_.end()) {
+            auto [name, ty] = found->second;
+            if (ty == Type::kBool) {
+                if (value == 0) {
+                    converted_.push_back("(! " + name + ")");
+                } else if (value == 1) {
+                    converted_.push_back(name);
+                } else {
+                    converted_.push_back("false");
+                }
+            } else {
+                converted_.push_back("(== " + name + " " + std::to_string(value) + ")");
+            }
+        } else {
+            std::cerr << "error: unknown variable: " << list[i]->id << std::endl;
+            abort();
+        }
+    }
+}
+
 std::string ConverterCallbacks::VarDescription(const std::string& name, Type type) const {
     if (auto found = variables_.find(name); found != variables_.end()) {
         return std::get<0>(AsType(found->second, type));

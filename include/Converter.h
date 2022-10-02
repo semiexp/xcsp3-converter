@@ -14,11 +14,14 @@ public:
     virtual void buildConstraintIntension(std::string id, XCSP3Core::Tree* tree) override;
     virtual void buildConstraintOrdered(std::string id, std::vector<XCSP3Core::XVariable *> &list, XCSP3Core::OrderType order) override;
     virtual void buildConstraintLex(std::string id, std::vector<std::vector<XCSP3Core::XVariable *>> &lists, XCSP3Core::OrderType order) override;
+    virtual void buildConstraintLexMatrix(std::string id, std::vector<std::vector<XCSP3Core::XVariable *>> &matrix, XCSP3Core::OrderType order);
     virtual void buildConstraintAlldifferent(std::string id, std::vector<XCSP3Core::XVariable*> &list) override;
     virtual void buildConstraintAlldifferent(std::string id, std::vector<XCSP3Core::Tree*> &list) override;
     virtual void buildConstraintAlldifferentMatrix(std::string id, std::vector<std::vector<XCSP3Core::XVariable *>> &matrix) override;
     virtual void buildConstraintSum(std::string id, std::vector<XCSP3Core::XVariable *> &list, XCSP3Core::XCondition &cond) override;
     virtual void buildConstraintSum(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::vector<int> &coeffs, XCSP3Core::XCondition &cond) override;
+    virtual void buildConstraintSum(std::string id, std::vector<XCSP3Core::Tree *> &trees, XCSP3Core::XCondition &cond) override;
+    virtual void buildConstraintSum(std::string id, std::vector<XCSP3Core::Tree *> &trees, std::vector<int> &coefs, XCSP3Core::XCondition &cond) override;
     virtual void buildConstraintExtension(std::string id, std::vector<XCSP3Core::XVariable *> list, std::vector<std::vector<int>> &tuples, bool support, bool hasStar) override;
     virtual void buildConstraintExtension(string id, XCSP3Core::XVariable *variable, std::vector<int> &tuples, bool support, bool hasStar) override;
     virtual void buildConstraintExtensionAs(std::string id, std::vector<XCSP3Core::XVariable *> list, bool support, bool hasStar) override;
@@ -35,7 +38,7 @@ public:
     void buildConstraintCardinality(std::string id, std::vector<XCSP3Core::XVariable *> &list, const std::vector<std::string>& values_desc, const std::vector<std::string> &occurs_desc, bool closed);
     virtual void buildConstraintExactlyK(std::string id, std::vector<XCSP3Core::XVariable *> &list, int value, int k) override;
     virtual void buildConstraintRegular(std::string id, std::vector<XCSP3Core::XVariable *> &list, std::string start, std::vector<std::string> &final, std::vector<XCSP3Core::XTransition> &transitions) override;
-
+    virtual void buildConstraintCircuit(std::string id, std::vector<XCSP3Core::XVariable *> &list, int startIndex) override;
     const std::vector<std::string>& GetConvertedDescriptions() const { return converted_; }
 
 private:

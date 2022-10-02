@@ -120,6 +120,29 @@ void ConverterCallbacks::buildConstraintLex(std::string id, std::vector<std::vec
     }
 }
 
+void ConverterCallbacks::buildConstraintLexMatrix(std::string id, std::vector<std::vector<XCSP3Core::XVariable *>> &matrix, XCSP3Core::OrderType order) {
+    buildConstraintLex(id, matrix, order);
+
+    int height = matrix.size();
+    if (height == 0) {
+        abort();
+    }
+    int width = matrix[0].size();
+    for (int y = 0; y < height; ++y) {
+        if (matrix[y].size() != width) {
+            std::cerr << "jagged matrix not supported for LexMatrix" << std::endl;
+            abort();
+        }
+    }
+    std::vector<std::vector<XCSP3Core::XVariable*>> transposed(width);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            transposed[x].push_back(matrix[y][x]);
+        }
+    }
+    buildConstraintLex(id, transposed, order);
+}
+
 void ConverterCallbacks::buildConstraintAlldifferent(std::string id, std::vector<XCSP3Core::XVariable*> &list) {
     std::string stmt = "(alldifferent";
     for (auto& var : list) {
@@ -211,6 +234,69 @@ void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Cor
             desc += var_desc;
             desc.push_back(' ');
             desc += std::to_string(coeffs[i]);
+            desc.push_back(')');
+        }
+    }
+    desc += ") ";
+    if (cond.operandType == XCSP3Core::OperandType::INTEGER) {
+        desc += std::to_string(cond.val);
+    } else {
+        desc += VarDescription(cond.var, Type::kInt);
+    }
+    desc.push_back(')');
+    converted_.push_back(desc);
+}
+
+void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Core::Tree *> &trees, XCSP3Core::XCondition &cond) {
+    std::vector<int> coefs(trees.size(), 1);
+    buildConstraintSum(id, trees, coefs, cond);
+}
+
+void ConverterCallbacks::buildConstraintSum(std::string id, std::vector<XCSP3Core::Tree *> &trees, std::vector<int> &coefs, XCSP3Core::XCondition &cond) {
+    if (!(cond.operandType == XCSP3Core::OperandType::INTEGER || cond.operandType == XCSP3Core::OperandType::VARIABLE)) {
+        std::cerr << "buildConstraintSum supported only for integer operand" << std::endl;
+        abort();
+    }
+    std::string desc = "(";
+    switch (cond.op) {
+        case XCSP3Core::OrderType::EQ:
+            desc += "==";
+            break;
+        case XCSP3Core::OrderType::NE:
+            desc += "!=";
+            break;
+        case XCSP3Core::OrderType::GE:
+            desc += ">=";
+            break;
+        case XCSP3Core::OrderType::GT:
+            desc += ">";
+            break;
+        case XCSP3Core::OrderType::LE:
+            desc += "<=";
+            break;
+        case XCSP3Core::OrderType::LT:
+            desc += "<";
+            break;
+        default:
+            std::cerr << "unsupported order type: " << cond.op << std::endl;
+            abort();
+    }
+    desc += " (+";
+    for (int i = 0; i < trees.size(); ++i) {
+        std::string tree_desc = std::get<0>(AsInt(ConvertTree(trees[i], variables_)));
+
+        if (coefs[i] == 1) {
+            desc.push_back(' ');
+            desc += tree_desc;
+        } else if (coefs[i] == -1) {
+            desc += " (- ";
+            desc += tree_desc;
+            desc.push_back(')');
+        } else {
+            desc += " (* ";
+            desc += tree_desc;
+            desc.push_back(' ');
+            desc += std::to_string(coefs[i]);
             desc.push_back(')');
         }
     }
@@ -453,6 +539,23 @@ void ConverterCallbacks::buildConstraintRegular(std::string id, std::vector<XCSP
         oss << ")";
         converted_.push_back(oss.str());
     }
+}
+
+void ConverterCallbacks::buildConstraintCircuit(std::string id, std::vector<XCSP3Core::XVariable *> &list, int startIndex) {
+    // TODO: startIndex is ignored (random value is given; bug in the parser?)
+    /*
+    if (startIndex != 0) {
+        std::cerr << "error: startIndex != 0 is not supported for Circuit (" << startIndex << ")" << std::endl;
+        abort();
+    }
+    */
+    std::ostringstream oss;
+    oss << "(circuit";
+    for (int i = 0; i < list.size(); ++i) {
+        oss << " " << VarDescription(list[i], Type::kInt);
+    }
+    oss << ")";
+    converted_.push_back(oss.str());
 }
 
 std::string ConverterCallbacks::VarDescription(const std::string& name, Type type) const {

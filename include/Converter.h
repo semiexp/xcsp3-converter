@@ -13,6 +13,7 @@ public:
     virtual void buildVariableInteger(std::string id, std::vector<int>& values) override;
     virtual void buildConstraintIntension(std::string id, XCSP3Core::Tree* tree) override;
     virtual void buildConstraintOrdered(std::string id, std::vector<XCSP3Core::XVariable *> &list, XCSP3Core::OrderType order) override;
+    virtual void buildConstraintLex(std::string id, std::vector<std::vector<XCSP3Core::XVariable *>> &lists, XCSP3Core::OrderType order) override;
     virtual void buildConstraintAlldifferent(std::string id, std::vector<XCSP3Core::XVariable*> &list) override;
     virtual void buildConstraintAlldifferent(std::string id, std::vector<XCSP3Core::Tree*> &list) override;
     virtual void buildConstraintAlldifferentMatrix(std::string id, std::vector<std::vector<XCSP3Core::XVariable *>> &matrix) override;

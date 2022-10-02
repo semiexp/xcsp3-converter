@@ -75,6 +75,51 @@ void ConverterCallbacks::buildConstraintOrdered(std::string id, std::vector<XCSP
     }
 }
 
+void ConverterCallbacks::buildConstraintLex(std::string id, std::vector<std::vector<XCSP3Core::XVariable *>> &lists, XCSP3Core::OrderType order) {
+    switch (order) {
+        case XCSP3Core::OrderType::LT:
+            break;
+        case XCSP3Core::OrderType::LE:
+            break;
+        case XCSP3Core::OrderType::GT:
+            order = XCSP3Core::OrderType::LT;
+            std::reverse(lists.begin(), lists.end());
+            break;
+        case XCSP3Core::OrderType::GE:
+            order = XCSP3Core::OrderType::LE;
+            std::reverse(lists.begin(), lists.end());
+            break;
+        default:
+            std::cerr << "error: unsupported order type for Ordered: " << order << std::endl;
+            abort();
+    }
+
+    for (int i = 1; i < lists.size(); ++i) {
+        if (lists[i - 1].size() != lists[i].size()) {
+            std::cerr << "error: size mismatch" << std::endl;
+            abort();
+        }
+
+        // (|| (< a0 b0) (&& (== a0 b0) ...))
+        std::ostringstream oss;
+        int n_par = 0;
+        for (int j = 0; j < lists[i].size(); ++j) {
+            if (j + 1 == lists[i].size()) {
+                oss << "(" << (order == XCSP3Core::OrderType::LE ? "<=" : "<") << " " << VarDescription(lists[i - 1][j], Type::kInt) << " " << VarDescription(lists[i][j], Type::kInt) << ")";
+            } else {
+                std::string a = VarDescription(lists[i - 1][j], Type::kInt);
+                std::string b = VarDescription(lists[i][j], Type::kInt);
+                oss << "(|| (< " << a << " " << b << ") (&& (== " << a << " " << b << ") ";
+                n_par += 2;
+            }
+        }
+        for (int j = 0; j < n_par; ++j) {
+            oss << ')';
+        }
+        converted_.push_back(oss.str());
+    }
+}
+
 void ConverterCallbacks::buildConstraintAlldifferent(std::string id, std::vector<XCSP3Core::XVariable*> &list) {
     std::string stmt = "(alldifferent";
     for (auto& var : list) {
